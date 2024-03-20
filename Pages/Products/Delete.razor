@@ -1,0 +1,69 @@
+﻿@page "/products/delete/{id:int}"
+@using Microsoft.EntityFrameworkCore
+
+@inject AppDbContext _context
+@inject NavigationManager _navigation
+
+<h3>@_model?.Title</h3>
+
+<EditForm Model="_model" OnValidSubmit="@HandleValidSubmitAsync">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label for="Title" class="form-label" id="Title">Title</label>
+        <InputText readonly class="form-control"
+                   id="Title"
+                   type="text"
+                   @bind-Value="_model.Title" />
+    </div>
+
+    <div class="mb-3">
+        <label for="Price" class="form-label" id="Price">Price</label>
+        <InputNumber readonly class="form-control"
+                     id="Price"
+                     type="text"
+                     @bind-Value="_model.Price" />
+    </div>
+
+
+
+    <button class="btn btn-danger" type="submit">DELETE</button>
+
+</EditForm>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Product? _model = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _model = await _context
+       .Products
+       .FirstOrDefaultAsync(x => x.Id == Id);
+    }
+
+    private async Task HandleValidSubmitAsync()
+    {
+        try
+        {
+            var product = await _context
+            .Products
+            .FirstOrDefaultAsync(x => x.Id == Id);
+
+            if (product is null)
+                throw new ArgumentNullException("Produto não existe");
+
+            _context.Products.Remove(product);
+            await _context.SaveChangesAsync();
+
+            _navigation.NavigateTo("/products");
+        }
+        catch (Exception ex)
+        {
+            var msg = ex.Message;
+        }
+    }
+}

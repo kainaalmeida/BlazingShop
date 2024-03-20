@@ -1,0 +1,89 @@
+﻿@page "/products/edit/{id:int}"
+@using Microsoft.EntityFrameworkCore
+
+@inject AppDbContext _context
+@inject NavigationManager _navigation
+
+<h3>@_model?.Title</h3>
+
+<EditForm Model="_model" OnValidSubmit="@HandleValidSubmitAsync">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label for="Title" class="form-label" id="Title">Title</label>
+        <InputText class="form-control"
+                   id="Title"
+                   type="text"
+                   @bind-Value="_model.Title" />
+    </div>
+
+    <div class="mb-3">
+        <label for="Price" class="form-label" id="Price">Price</label>
+        <InputNumber class="form-control"
+                     id="Price"
+                     type="text"
+                     @bind-Value="_model.Price" />
+    </div>
+
+    <div class="mb-3">
+        <label for="CategoryId" class="form-label" id="CategoryId">Category</label>
+        <InputSelect class="form-control"
+                     id="CategoryId"
+                     @bind-Value="_model.CategoryId">
+            @foreach (var category in _categories)
+            {
+                <option value="@category.Id">@category.Title</option>
+            }
+        </InputSelect>
+    </div>
+
+    <button class="btn btn-success" type="submit">SAVE</button>
+
+</EditForm>
+
+@code {
+    private Product? _model = new();
+    private List<Category> _categories = new();
+
+    [Parameter]
+    public int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _categories = await _context
+            .Categories
+            .AsNoTracking()
+            .ToListAsync();
+
+        _model = await _context
+        .Products
+        .FirstOrDefaultAsync(x => x.Id == Id);
+    }
+
+    private async Task HandleValidSubmitAsync()
+    {
+        try
+        {
+            var product = await _context
+            .Products
+            .FirstOrDefaultAsync(x => x.Id == Id);
+
+            if (product is null)
+                throw new ArgumentNullException("Produto não existe");
+
+            product.Title = _model.Title;
+            product.Price = _model.Price;
+            product.CategoryId = _model.CategoryId;
+
+            _context.Products.Update(product);
+            await _context.SaveChangesAsync();
+
+            _navigation.NavigateTo("/products");
+        }
+        catch (Exception ex)
+        {
+            var msg = ex.Message;
+        }
+    }
+}
